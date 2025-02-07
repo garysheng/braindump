@@ -171,12 +171,78 @@ export function QuestionSelector({ onSubmit, onCancel, userId, hasOpenAIKey, onN
         Choose questions for your session using one of the methods below.
       </p>
 
-      <Tabs defaultValue="templates" className="w-full">
+      <Tabs defaultValue="ai" className="w-full">
         <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="ai">AI Generate</TabsTrigger>
           <TabsTrigger value="templates">Templates</TabsTrigger>
           <TabsTrigger value="custom">Write Questions</TabsTrigger>
-          <TabsTrigger value="ai">AI Generate</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="ai" className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="ai-prompt">
+              Describe what kind of questions you want
+            </Label>
+            <Textarea
+              id="ai-prompt"
+              placeholder="Example: Generate questions for a daily reflection focused on personal growth and productivity."
+              className="min-h-[100px]"
+              value={aiPrompt}
+              onChange={(e) => setAiPrompt(e.target.value)}
+            />
+            <p className="text-sm text-muted-foreground">
+              AI will generate 5-10 thoughtful questions based on your prompt.
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-sm text-muted-foreground">
+              Or choose a preset prompt:
+            </Label>
+            <div className="flex flex-wrap gap-2">
+              {DEFAULT_PROMPTS.map((prompt) => (
+                <button
+                  key={prompt}
+                  onClick={() => handleSelectPrompt(prompt)}
+                  className={`px-3 py-1.5 text-sm rounded-full transition-colors ${
+                    aiPrompt === prompt
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-muted hover:bg-muted/70'
+                  }`}
+                >
+                  {prompt}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-4">
+            <Button
+              variant="outline"
+              onClick={onCancel}
+              disabled={isGeneratingQuestions}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleGenerateQuestions}
+              disabled={!aiPrompt.trim() || isGeneratingQuestions}
+              className="gap-2"
+            >
+              {isGeneratingQuestions ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4" />
+                  Generate Questions
+                </>
+              )}
+            </Button>
+          </div>
+        </TabsContent>
 
         <TabsContent value="templates" className="space-y-6">
           <div className="flex justify-end">
@@ -303,72 +369,6 @@ export function QuestionSelector({ onSubmit, onCancel, userId, hasOpenAIKey, onN
                 </>
               ) : (
                 'Start Session'
-              )}
-            </Button>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="ai" className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="ai-prompt">
-              Describe what kind of questions you want
-            </Label>
-            <Textarea
-              id="ai-prompt"
-              placeholder="Example: Generate questions for a daily reflection focused on personal growth and productivity."
-              className="min-h-[100px]"
-              value={aiPrompt}
-              onChange={(e) => setAiPrompt(e.target.value)}
-            />
-            <p className="text-sm text-muted-foreground">
-              AI will generate 5-10 thoughtful questions based on your prompt.
-            </p>
-          </div>
-
-          <div className="space-y-2">
-            <Label className="text-sm text-muted-foreground">
-              Or choose a preset prompt:
-            </Label>
-            <div className="flex flex-wrap gap-2">
-              {DEFAULT_PROMPTS.map((prompt) => (
-                <button
-                  key={prompt}
-                  onClick={() => handleSelectPrompt(prompt)}
-                  className={`px-3 py-1.5 text-sm rounded-full transition-colors ${
-                    aiPrompt === prompt
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-muted hover:bg-muted/70'
-                  }`}
-                >
-                  {prompt}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-4">
-            <Button
-              variant="outline"
-              onClick={onCancel}
-              disabled={isGeneratingQuestions}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleGenerateQuestions}
-              disabled={!aiPrompt.trim() || isGeneratingQuestions}
-              className="gap-2"
-            >
-              {isGeneratingQuestions ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Generating...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="w-4 h-4" />
-                  Generate Questions
-                </>
               )}
             </Button>
           </div>

@@ -10,6 +10,12 @@ import { RECORDING } from "@/constants/recording";
 import { Mic, Square, Loader2, ChevronLeft, ChevronRight, Trash2, Copy, Download } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useAutoAdvance } from "@/hooks/use-auto-advance";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 enum RecordingState {
   IDLE = "IDLE",
@@ -447,13 +453,6 @@ export function RecordingInterface({
           <div className="max-w-7xl mx-auto flex justify-between items-center p-6">
             <Button
               variant="outline"
-              onClick={onPrevious}
-              className="w-[180px] h-12 text-base gap-2"
-            >
-              <ChevronLeft className="w-5 h-5" />
-              Back to Questions
-            </Button>
-            <Button
               onClick={handleDownload}
               className="w-[180px] h-12 text-base gap-2"
             >
@@ -547,7 +546,7 @@ export function RecordingInterface({
               )}
               <button
                 onClick={stopRecording}
-                className="p-6 rounded-full bg-red-900/50 hover:bg-red-900/70 transition-colors animate-pulse relative z-10"
+                className="p-6 rounded-full bg-red-900/50 hover:bg-red-900/70 transition-colors animate-pulse relative z-10 select-none"
               >
                 <Square className="w-12 h-12 text-red-400" />
               </button>
@@ -581,7 +580,7 @@ export function RecordingInterface({
             </p>
             <Button
               onClick={startRecording}
-              className="relative w-full flex items-center justify-center gap-2 px-6 py-4 bg-red-900/50 text-red-300 hover:bg-red-900/70 transition-all"
+              className="relative w-full flex items-center justify-center gap-2 px-6 py-4 bg-red-900/50 text-red-300 hover:bg-red-900/70 transition-all select-none"
             >
               <Mic className="w-5 h-5" />
               <span>Start Recording</span>
@@ -593,27 +592,55 @@ export function RecordingInterface({
       {/* Fixed Bottom Navigation Bar */}
       <div className="fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-sm border-t">
         <div className="max-w-7xl mx-auto flex justify-between items-center p-6">
-          <Button
-            variant="outline"
-            onClick={onPrevious}
-            disabled={isFirstQuestion || recordingState !== RecordingState.IDLE}
-            className="w-[180px] h-12 text-base gap-2"
-          >
-            <ChevronLeft className="w-5 h-5" />
-            Previous
-          </Button>
-          <span className="text-base text-muted-foreground">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  onClick={onPrevious}
+                  disabled={isFirstQuestion || recordingState !== RecordingState.IDLE}
+                  className="w-[180px] h-12 text-base gap-2 select-none"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                  Previous
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="flex items-center gap-2">
+                  <span className="text-muted-foreground">Shortcut:</span>
+                  <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
+                    ←
+                  </kbd>
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          <span className="text-base text-muted-foreground select-none">
             Question {currentQuestionIndex + 1} of {allQuestions.length}
           </span>
-          <Button
-            variant="outline"
-            onClick={onNext}
-            disabled={isLastQuestion || recordingState !== RecordingState.IDLE}
-            className="w-[180px] h-12 text-base gap-2"
-          >
-            Next
-            <ChevronRight className="w-5 h-5" />
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  onClick={onNext}
+                  disabled={isLastQuestion || recordingState !== RecordingState.IDLE}
+                  className="w-[180px] h-12 text-base gap-2 select-none"
+                >
+                  Next
+                  <ChevronRight className="w-5 h-5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="flex items-center gap-2">
+                  <span className="text-muted-foreground">Shortcut:</span>
+                  <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
+                    →
+                  </kbd>
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       </div>
     </div>
