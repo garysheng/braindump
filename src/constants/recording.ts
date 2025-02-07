@@ -1,0 +1,5 @@
+export const RECORDING = {
+  MAX_DURATION_SECONDS: 300, // 5 minutes
+  COUNTDOWN_THRESHOLD_SECONDS: 30,
+  GOOD_AUDIO_THRESHOLD: 0.3,
+} as const; 
