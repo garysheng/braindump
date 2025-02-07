@@ -466,7 +466,8 @@ export function RecordingInterface({
   }
 
   return (
-    <div className="flex flex-col items-center space-y-6">
+    <div className="flex flex-col items-center space-y-6 p-8 rounded-lg relative bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 border-2 border-transparent [background-clip:padding-box] before:absolute before:inset-0 before:-z-10 before:m-[-2px] before:rounded-lg before:bg-gradient-to-r before:from-indigo-500 before:via-purple-500 before:to-pink-500">
+
       {/* Auto Advance Toggle */}
       <div className="w-full flex items-center justify-end space-x-2">
         <Label htmlFor="auto-advance" className="text-sm text-muted-foreground">
@@ -591,6 +592,15 @@ export function RecordingInterface({
 
       {/* Fixed Bottom Navigation Bar */}
       <div className="fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-sm border-t">
+        {/* Progress Bar */}
+        <div className="w-full h-1.5 bg-muted/30 overflow-hidden">
+          <div 
+            className="h-full bg-white shadow-[0_0_10px_rgba(255,255,255,0.2)] transition-all duration-300 ease-in-out"
+            style={{ 
+              width: `${((currentQuestionIndex + 1) / allQuestions.length) * 100}%`,
+            }}
+          />
+        </div>
         <div className="max-w-7xl mx-auto flex justify-between items-center p-6">
           <TooltipProvider>
             <Tooltip>

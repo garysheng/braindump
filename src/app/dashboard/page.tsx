@@ -9,7 +9,7 @@ import { QuestionSelector } from "@/components/question-selector";
 import { createNewSession, getUserSessions, deleteSession } from "@/lib/data-service-client";
 import { useSession } from "@/hooks/use-session";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Loader2, Calendar, ArrowLeft, User, Trash2 } from "lucide-react";
+import { Plus, Loader2, ArrowLeft, User, Trash2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -241,7 +241,7 @@ export default function DashboardPage() {
 
         <div className="grid gap-6">
           {activeSessionId && session ? (
-            <div className="p-6 bg-card rounded-lg border">
+            <div className="bg-card rounded-lg">
               <RecordingInterface
                 sessionId={session.id}
                 currentQuestion={session.questions[currentQuestionIndex]}
@@ -285,7 +285,6 @@ export default function DashboardPage() {
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>
-                          <Calendar className="w-5 h-5 text-muted-foreground" />
                         </div>
                       </div>
                     </div>
