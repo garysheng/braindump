@@ -195,20 +195,16 @@ export function RecordingInterface({
             blob: audioBlob,
           });
 
-          toast({
-            title: "Success",
-            description: "Response recorded successfully!",
-            variant: "default",
-          });
-
           setRecordingState(RecordingState.IDLE);
           
           // Automatically move to next question if enabled and available
           if (autoAdvance && !isLastQuestion && onNext) {
             onNext();
+          } else {
             toast({
-              description: "Moving to next question...",
-              duration: 2000,
+              title: "Success",
+              description: "Response recorded successfully!",
+              variant: "default",
             });
           }
         } catch (error) {
@@ -412,7 +408,7 @@ export function RecordingInterface({
   };
 
   // Show export view if we're on the last question and have at least one response
-  const shouldShowExport = isLastQuestion && currentQuestion.responses.length > 0;
+  const shouldShowExport = isLastQuestion && allQuestions.some(q => q.responses.length > 0);
 
   if (shouldShowExport) {
     return (
@@ -420,7 +416,7 @@ export function RecordingInterface({
         <div className="space-y-4">
           <h3 className="text-xl font-medium">Session Complete!</h3>
           <p className="text-sm text-muted-foreground">
-            Here are all your responses. You can copy them to your clipboard or download them as a text file.
+            Here are all your responses. You can copy them to your clipboard, download them as a text file, or return to any question to make changes.
           </p>
         </div>
 
@@ -438,11 +434,30 @@ export function RecordingInterface({
           {allQuestions.map((q, index) => {
             const response = q.responses[0]; // Get the most recent response
             return (
-              <div key={q.id} className="space-y-2">
+              <div 
+                key={q.id} 
+                className="space-y-2 p-4 rounded-lg hover:bg-accent/50 transition-colors cursor-pointer group"
+                onClick={() => {
+                  if (onPrevious && currentQuestionIndex > index) {
+                    // Navigate backwards multiple times if needed
+                    for (let i = 0; i < currentQuestionIndex - index; i++) {
+                      onPrevious();
+                    }
+                  } else if (onNext && currentQuestionIndex < index) {
+                    // Navigate forwards multiple times if needed
+                    for (let i = 0; i < index - currentQuestionIndex; i++) {
+                      onNext();
+                    }
+                  }
+                }}
+              >
                 <p className="font-medium">Q{index + 1}: {q.text}</p>
                 <p className="text-sm text-muted-foreground pl-6">
                   {response?.transcription || 'No response'}
                 </p>
+                <div className="h-0 overflow-hidden group-hover:h-auto group-hover:mt-2 transition-all">
+                  <p className="text-xs text-muted-foreground italic">Click to revisit this question</p>
+                </div>
               </div>
             );
           })}
@@ -450,7 +465,24 @@ export function RecordingInterface({
 
         {/* Fixed Bottom Navigation Bar */}
         <div className="fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-sm border-t">
+          {/* Progress Bar */}
+          <div className="w-full h-1.5 bg-muted/30 overflow-hidden">
+            <div 
+              className="h-full bg-white shadow-[0_0_10px_rgba(255,255,255,0.2)] transition-all duration-300 ease-in-out"
+              style={{ 
+                width: '100%',
+              }}
+            />
+          </div>
           <div className="max-w-7xl mx-auto flex justify-between items-center p-6">
+            <Button
+              variant="outline"
+              onClick={() => onPrevious && onPrevious()}
+              className="w-[180px] h-12 text-base gap-2"
+            >
+              <ChevronLeft className="w-5 h-5" />
+              Return to Questions
+            </Button>
             <Button
               variant="outline"
               onClick={handleDownload}
@@ -466,7 +498,7 @@ export function RecordingInterface({
   }
 
   return (
-    <div className="flex flex-col items-center space-y-6 p-8 rounded-lg relative bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 border-2 border-transparent [background-clip:padding-box] before:absolute before:inset-0 before:-z-10 before:m-[-2px] before:rounded-lg before:bg-gradient-to-r before:from-indigo-500 before:via-purple-500 before:to-pink-500">
+    <div className="flex flex-col items-center space-y-6 p-8 rounded-lg relative bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 border-2 border-transparent [background-clip:padding-box] before:absolute before:inset-0 before:-z-10 before:m-[-2px] before:rounded-lg before:bg-gradient-to-r before:from-indigo-500 before:via-purple-500 before:to-pink-500 transition-opacity duration-300">
 
       {/* Auto Advance Toggle */}
       <div className="w-full flex items-center justify-end space-x-2">
@@ -481,9 +513,9 @@ export function RecordingInterface({
       </div>
 
       {/* Question Display */}
-      <div className="w-full text-center space-y-2">
+      <div className="w-full text-center space-y-2 transition-all duration-300 transform">
         <h3 className="text-xl font-medium">{currentQuestion.text}</h3>
-        {currentQuestion.responses.length > 0 && (
+        {currentQuestion.responses.length > 0 && !autoAdvance && (
           <div className="space-y-4 mt-4">
             <p className="text-sm text-muted-foreground">
               {currentQuestion.responses.length} response{currentQuestion.responses.length !== 1 ? 's' : ''} recorded
@@ -556,8 +588,8 @@ export function RecordingInterface({
               {isWarmingUp
                 ? "Warming up..."
                 : recordingTime <= RECORDING.COUNTDOWN_THRESHOLD_SECONDS
-                ? `${Math.floor(recordingTime / 60)}:${(recordingTime % 60).toString().padStart(2, "0")} left`
-                : null}
+                ? `${Math.floor(recordingTime / 60)}:${(recordingTime % 60).toString().padStart(2, "0")} left - Press space to stop`
+                : "Press space to stop recording"}
             </div>
           </div>
         )}
