@@ -188,6 +188,12 @@ export function RecordingInterface({
 
       mediaRecorderRef.current.onstop = async () => {
         try {
+          // If auto-advance is enabled and we're not on the last question,
+          // advance to the next question before processing the transcription
+          if (autoAdvance && !isLastQuestion && onNext) {
+            onNext();
+          }
+
           const audioBlob = new Blob(audioChunksRef.current, { type: "audio/wav" });
           await addResponseToQuestion({
             userId: user.uid,
@@ -197,11 +203,9 @@ export function RecordingInterface({
           });
 
           setRecordingState(RecordingState.IDLE);
-          
-          // Automatically move to next question if enabled and available
-          if (autoAdvance && !isLastQuestion && onNext) {
-            onNext();
-          } else {
+
+          // Only show the success toast if we're not auto-advancing
+          if (!autoAdvance || isLastQuestion) {
             toast({
               title: "Success",
               description: "Response recorded successfully!",
@@ -352,7 +356,7 @@ export function RecordingInterface({
 
   const handleDeleteResponse = async (responseId: string) => {
     if (!user) return;
-    
+
     try {
       setIsDeletingResponse(responseId);
       await deleteResponse({
@@ -445,8 +449,8 @@ export function RecordingInterface({
           {allQuestions.map((q, index) => {
             const response = q.responses[0]; // Get the most recent response
             return (
-              <div 
-                key={q.id} 
+              <div
+                key={q.id}
                 className="space-y-2 p-4 rounded-lg hover:bg-accent/50 transition-colors cursor-pointer group"
                 onClick={() => {
                   if (onPrevious && currentQuestionIndex > index) {
@@ -477,16 +481,16 @@ export function RecordingInterface({
           <div className="w-full h-1.5 bg-muted/30 overflow-hidden">
             <div className="relative h-full w-full">
               {/* Completed sections - solid white */}
-              <div 
+              <div
                 className="absolute h-full bg-white shadow-[0_0_10px_rgba(255,255,255,0.2)] transition-all duration-300 ease-in-out"
-                style={{ 
+                style={{
                   width: `${(currentQuestionIndex / allQuestions.length) * 100}%`,
                 }}
               />
               {/* Current section - gradient */}
-              <div 
+              <div
                 className="absolute h-full bg-gradient-to-r from-white to-transparent shadow-[0_0_10px_rgba(255,255,255,0.2)] transition-all duration-300 ease-in-out"
-                style={{ 
+                style={{
                   left: `${(currentQuestionIndex / allQuestions.length) * 100}%`,
                   width: `${(1 / allQuestions.length) * 100}%`,
                 }}
@@ -541,8 +545,8 @@ export function RecordingInterface({
             </p>
             <div className="space-y-2">
               {currentQuestion.responses.map((response) => (
-                <div 
-                  key={response.id} 
+                <div
+                  key={response.id}
                   className="p-4 rounded-lg bg-muted/50 text-left relative group"
                 >
                   <div className="flex justify-between items-start gap-4">
@@ -607,8 +611,8 @@ export function RecordingInterface({
               {isWarmingUp
                 ? "Warming up..."
                 : recordingTime <= RECORDING.COUNTDOWN_THRESHOLD_SECONDS
-                ? `${Math.floor(recordingTime / 60)}:${(recordingTime % 60).toString().padStart(2, "0")} left - Press space to stop`
-                : "Press space to stop recording"}
+                  ? `${Math.floor(recordingTime / 60)}:${(recordingTime % 60).toString().padStart(2, "0")} left - Press space to stop`
+                  : "Press space to stop recording"}
             </div>
           </div>
         )}
@@ -647,16 +651,16 @@ export function RecordingInterface({
         <div className="w-full h-1.5 bg-muted/30 overflow-hidden">
           <div className="relative h-full w-full">
             {/* Completed sections - solid white */}
-            <div 
+            <div
               className="absolute h-full bg-white shadow-[0_0_10px_rgba(255,255,255,0.2)] transition-all duration-300 ease-in-out"
-              style={{ 
+              style={{
                 width: `${(currentQuestionIndex / allQuestions.length) * 100}%`,
               }}
             />
             {/* Current section - gradient */}
-            <div 
+            <div
               className="absolute h-full bg-gradient-to-r from-white to-transparent shadow-[0_0_10px_rgba(255,255,255,0.2)] transition-all duration-300 ease-in-out"
-              style={{ 
+              style={{
                 left: `${(currentQuestionIndex / allQuestions.length) * 100}%`,
                 width: `${(1 / allQuestions.length) * 100}%`,
               }}
