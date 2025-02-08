@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { OpenAIKeyDialog } from "@/components/openai-key-dialog";
+import { Toaster } from "@/components/ui/toaster";
 
 export function ClientLayout({ children }: { children: React.ReactNode }) {
   const [showOpenAIKeyDialog, setShowOpenAIKeyDialog] = useState(false);
@@ -26,6 +27,7 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
         open={showOpenAIKeyDialog} 
         onOpenAIKeySubmit={handleOpenAIKeySubmit} 
       />
+      <Toaster />
     </>
   );
 } 

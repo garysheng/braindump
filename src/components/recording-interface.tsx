@@ -115,6 +115,7 @@ export function RecordingInterface({
   const [autoAdvance, setAutoAdvance] = useAutoAdvance();
   const [isWarmingUp, setIsWarmingUp] = useState(false);
   const [isDeletingResponse, setIsDeletingResponse] = useState<string | null>(null);
+  const [isSessionComplete, setIsSessionComplete] = useState(false);
 
   // MediaRecorder references
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -382,12 +383,22 @@ export function RecordingInterface({
       return `Q: ${q.text}\nA: ${response?.transcription || 'No response'}\n`;
     }).join('\n');
 
-    navigator.clipboard.writeText(text).then(() => {
-      toast({
-        description: "Copied to clipboard!",
-        duration: 2000,
+    navigator.clipboard.writeText(text)
+      .then(() => {
+        toast({
+          title: "Success",
+          description: "All responses copied to clipboard",
+          duration: 2000,
+        });
+      })
+      .catch(() => {
+        toast({
+          title: "Error",
+          description: "Failed to copy to clipboard",
+          variant: "destructive",
+          duration: 2000,
+        });
       });
-    });
   };
 
   const handleDownload = () => {
@@ -408,7 +419,7 @@ export function RecordingInterface({
   };
 
   // Show export view if we're on the last question and have at least one response
-  const shouldShowExport = isLastQuestion && allQuestions.some(q => q.responses.length > 0);
+  const shouldShowExport = isSessionComplete && allQuestions.some(q => q.responses.length > 0);
 
   if (shouldShowExport) {
     return (
@@ -455,9 +466,6 @@ export function RecordingInterface({
                 <p className="text-sm text-muted-foreground pl-6">
                   {response?.transcription || 'No response'}
                 </p>
-                <div className="h-0 overflow-hidden group-hover:h-auto group-hover:mt-2 transition-all">
-                  <p className="text-xs text-muted-foreground italic">Click to revisit this question</p>
-                </div>
               </div>
             );
           })}
@@ -467,17 +475,28 @@ export function RecordingInterface({
         <div className="fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-sm border-t">
           {/* Progress Bar */}
           <div className="w-full h-1.5 bg-muted/30 overflow-hidden">
-            <div 
-              className="h-full bg-white shadow-[0_0_10px_rgba(255,255,255,0.2)] transition-all duration-300 ease-in-out"
-              style={{ 
-                width: '100%',
-              }}
-            />
+            <div className="relative h-full w-full">
+              {/* Completed sections - solid white */}
+              <div 
+                className="absolute h-full bg-white shadow-[0_0_10px_rgba(255,255,255,0.2)] transition-all duration-300 ease-in-out"
+                style={{ 
+                  width: `${(currentQuestionIndex / allQuestions.length) * 100}%`,
+                }}
+              />
+              {/* Current section - gradient */}
+              <div 
+                className="absolute h-full bg-gradient-to-r from-white to-transparent shadow-[0_0_10px_rgba(255,255,255,0.2)] transition-all duration-300 ease-in-out"
+                style={{ 
+                  left: `${(currentQuestionIndex / allQuestions.length) * 100}%`,
+                  width: `${(1 / allQuestions.length) * 100}%`,
+                }}
+              />
+            </div>
           </div>
           <div className="max-w-7xl mx-auto flex justify-between items-center p-6">
             <Button
               variant="outline"
-              onClick={() => onPrevious && onPrevious()}
+              onClick={() => setIsSessionComplete(false)}
               className="w-[180px] h-12 text-base gap-2"
             >
               <ChevronLeft className="w-5 h-5" />
@@ -515,13 +534,13 @@ export function RecordingInterface({
       {/* Question Display */}
       <div className="w-full text-center space-y-2 transition-all duration-300 transform">
         <h3 className="text-xl font-medium">{currentQuestion.text}</h3>
-        {currentQuestion.responses.length > 0 && !autoAdvance && (
+        {currentQuestion.responses.length > 0 && (
           <div className="space-y-4 mt-4">
             <p className="text-sm text-muted-foreground">
               {currentQuestion.responses.length} response{currentQuestion.responses.length !== 1 ? 's' : ''} recorded
             </p>
             <div className="space-y-2">
-              {currentQuestion.responses.map((response, index) => (
+              {currentQuestion.responses.map((response) => (
                 <div 
                   key={response.id} 
                   className="p-4 rounded-lg bg-muted/50 text-left relative group"
@@ -529,7 +548,7 @@ export function RecordingInterface({
                   <div className="flex justify-between items-start gap-4">
                     <div className="flex-1">
                       <p className="text-sm text-muted-foreground mb-1">
-                        Response {index + 1} - {new Date(response.createdAt).toLocaleString()}
+                        {new Date(response.createdAt).toLocaleString()}
                       </p>
                       <p className="text-sm">{response.transcription}</p>
                     </div>
@@ -626,12 +645,23 @@ export function RecordingInterface({
       <div className="fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-sm border-t">
         {/* Progress Bar */}
         <div className="w-full h-1.5 bg-muted/30 overflow-hidden">
-          <div 
-            className="h-full bg-white shadow-[0_0_10px_rgba(255,255,255,0.2)] transition-all duration-300 ease-in-out"
-            style={{ 
-              width: `${((currentQuestionIndex + 1) / allQuestions.length) * 100}%`,
-            }}
-          />
+          <div className="relative h-full w-full">
+            {/* Completed sections - solid white */}
+            <div 
+              className="absolute h-full bg-white shadow-[0_0_10px_rgba(255,255,255,0.2)] transition-all duration-300 ease-in-out"
+              style={{ 
+                width: `${(currentQuestionIndex / allQuestions.length) * 100}%`,
+              }}
+            />
+            {/* Current section - gradient */}
+            <div 
+              className="absolute h-full bg-gradient-to-r from-white to-transparent shadow-[0_0_10px_rgba(255,255,255,0.2)] transition-all duration-300 ease-in-out"
+              style={{ 
+                left: `${(currentQuestionIndex / allQuestions.length) * 100}%`,
+                width: `${(1 / allQuestions.length) * 100}%`,
+              }}
+            />
+          </div>
         </div>
         <div className="max-w-7xl mx-auto flex justify-between items-center p-6">
           <TooltipProvider>
@@ -657,9 +687,21 @@ export function RecordingInterface({
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
-          <span className="text-base text-muted-foreground select-none">
-            Question {currentQuestionIndex + 1} of {allQuestions.length}
-          </span>
+          <div className="flex flex-col items-center gap-2">
+            <span className="text-base text-muted-foreground select-none">
+              Question {currentQuestionIndex + 1} of {allQuestions.length}
+            </span>
+            {isLastQuestion && (
+              <Button
+                variant="link"
+                size="sm"
+                onClick={() => setIsSessionComplete(true)}
+                className="text-muted-foreground hover:text-primary"
+              >
+                Complete Session
+              </Button>
+            )}
+          </div>
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
