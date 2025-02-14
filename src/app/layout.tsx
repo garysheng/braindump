@@ -8,8 +8,8 @@ import { ClientLayout } from "@/components/client-layout";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Brain Dump",
-  description: "Record and transcribe your thoughts with ease",
+  title: "BrainDump",
+  description: "Record and transcribe your thoughts through guided questions, then transform them into polished drafts with AI assistance.",
 };
 
 export default function RootLayout({

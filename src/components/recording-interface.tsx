@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/lib/firebase/auth-context";
 import { addResponseToQuestion, deleteResponse } from "@/lib/data-service-client";
 import { RECORDING } from "@/constants/recording";
-import { Mic, Square, Loader2, ChevronLeft, ChevronRight, Trash2, Copy, Download } from "lucide-react";
+import { Mic, Square, Loader2, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useAutoAdvance } from "@/hooks/use-auto-advance";
 import {
@@ -385,23 +385,6 @@ export function RecordingInterface({
     } finally {
       setIsDeletingResponse(null);
     }
-  };
-
-  const handleDownload = () => {
-    const text = allQuestions.map(q => {
-      const response = q.responses[0]; // Get the most recent response
-      return `Q: ${q.text}\nA: ${response?.transcription || 'No response'}\n`;
-    }).join('\n');
-
-    const blob = new Blob([text], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `session-${new Date().toISOString().split('T')[0]}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
   };
 
   const handleGenerateDraft = async (params: GenerationParams) => {

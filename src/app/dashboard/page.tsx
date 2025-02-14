@@ -9,7 +9,7 @@ import { QuestionSelector } from "@/components/question-selector";
 import { createNewSession, getUserSessions, deleteSession } from "@/lib/data-service-client";
 import { useSession } from "@/hooks/use-session";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Loader2, ArrowLeft, Trash2 } from "lucide-react";
+import { Plus, Loader2, Trash2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -27,7 +27,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { AppHeader } from "@/components/app-header";
 
 interface Question {
   id: string;
@@ -40,35 +39,6 @@ interface Session {
   title: string;
   createdAt: Date;
   updatedAt: Date;
-}
-
-interface HeaderContentProps {
-  session: any | null;
-  activeSessionId: string | null;
-  onReturnToSessions: () => void;
-}
-
-function HeaderContent({ session, activeSessionId, onReturnToSessions }: HeaderContentProps) {
-  if (activeSessionId) {
-    return (
-      <div className="flex items-center gap-4">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onReturnToSessions}
-          className="gap-2"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Return to Sessions
-        </Button>
-        <h1 className="text-lg font-semibold truncate">
-          {session?.title}
-        </h1>
-      </div>
-    );
-  }
-
-  return <h1 className="text-lg font-semibold">Dashboard</h1>;
 }
 
 export default function DashboardPage() {
