@@ -440,7 +440,21 @@ export function RecordingInterface({
 
   if (shouldShowExport) {
     return (
-      <div className="space-y-8 mb-24">
+      <div className="space-y-8">
+        <div className="flex justify-between items-center">
+          <Button
+            variant="outline"
+            onClick={() => setIsSessionComplete(false)}
+            className={cn(
+              "gap-3",
+              "border-2"
+            )}
+          >
+            <ChevronLeft className="w-5 h-5" />
+            <span>Return to Questions</span>
+          </Button>
+        </div>
+
         <div className="space-y-4">
           <h3 className="text-xl font-medium">Session Complete!</h3>
           <p className="text-sm text-muted-foreground">
@@ -455,80 +469,8 @@ export function RecordingInterface({
           }))}
           onGenerateDraft={handleGenerateDraft}
           isGenerating={isGeneratingDraft}
+          generatedContent={generatedContent}
         />
-
-        {generatedContent && (
-          <div className="space-y-4 bg-muted/50 rounded-lg p-6">
-            <div className="flex justify-between items-center">
-              <h4 className="text-lg font-medium">Generated Draft</h4>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  navigator.clipboard.writeText(generatedContent);
-                  toast({
-                    description: "Draft copied to clipboard",
-                  });
-                }}
-                className="gap-2"
-              >
-                <Copy className="w-4 h-4" />
-                Copy Draft
-              </Button>
-            </div>
-            <div className="prose prose-invert max-w-none">
-              <div className="whitespace-pre-wrap">{generatedContent}</div>
-            </div>
-          </div>
-        )}
-
-        {/* Fixed Bottom Navigation Bar */}
-        <div className="fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-sm border-t">
-          {/* Progress Bar */}
-          <div className="w-full h-1.5 bg-muted/30 overflow-hidden">
-            <div className="relative h-full w-full">
-              {/* Completed sections - solid white */}
-              <div
-                className="absolute h-full bg-white shadow-[0_0_10px_rgba(255,255,255,0.2)] transition-all duration-300 ease-in-out"
-                style={{
-                  width: `${(currentQuestionIndex / allQuestions.length) * 100}%`,
-                }}
-              />
-              {/* Current section - gradient */}
-              <div
-                className="absolute h-full bg-gradient-to-r from-white to-transparent shadow-[0_0_10px_rgba(255,255,255,0.2)] transition-all duration-300 ease-in-out"
-                style={{
-                  left: `${(currentQuestionIndex / allQuestions.length) * 100}%`,
-                  width: `${(1 / allQuestions.length) * 100}%`,
-                }}
-              />
-            </div>
-          </div>
-          <div className="max-w-7xl mx-auto flex justify-between items-center p-6">
-            <Button
-              variant="outline"
-              onClick={() => setIsSessionComplete(false)}
-              className={cn(
-                "w-[240px] h-12 text-base gap-3",
-                "border-2"
-              )}
-            >
-              <ChevronLeft className="w-5 h-5" />
-              <span>Return to Questions</span>
-            </Button>
-            <Button
-              variant="outline"
-              onClick={handleDownload}
-              className={cn(
-                "w-[180px] h-12 text-base gap-2",
-                "border-2"
-              )}
-            >
-              <Download className="w-5 h-5" />
-              Download as TXT
-            </Button>
-          </div>
-        </div>
       </div>
     );
   }
