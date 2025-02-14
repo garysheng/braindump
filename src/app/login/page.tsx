@@ -42,10 +42,10 @@ export default function LoginPage() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-4">
       <div className="w-full max-w-md space-y-8">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold">Welcome Back</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Sign in to continue to your dashboard
+        <div className="text-center space-y-2">
+          <h1 className="text-4xl font-bold">Get Started</h1>
+          <p className="text-lg text-muted-foreground">
+            Record and transcribe your thoughts with ease
           </p>
         </div>
 
@@ -73,6 +73,10 @@ export default function LoginPage() {
           </svg>
           Continue with Google
         </Button>
+
+        <p className="text-center text-sm text-muted-foreground">
+          By continuing, you agree to our Terms of Service and Privacy Policy
+        </p>
       </div>
     </main>
   );

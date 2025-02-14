@@ -16,6 +16,10 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { ExportView } from "@/components/export-view";
+import { generateDraft } from "@/lib/draft-service";
+import type { GenerationParams } from '@/types';
+import { cn } from "@/lib/utils";
 
 enum RecordingState {
   IDLE = "IDLE",
@@ -116,6 +120,8 @@ export function RecordingInterface({
   const [isWarmingUp, setIsWarmingUp] = useState(false);
   const [isDeletingResponse, setIsDeletingResponse] = useState<string | null>(null);
   const [isSessionComplete, setIsSessionComplete] = useState(false);
+  const [isGeneratingDraft, setIsGeneratingDraft] = useState(false);
+  const [generatedContent, setGeneratedContent] = useState<string | null>(null);
 
   // MediaRecorder references
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -381,30 +387,6 @@ export function RecordingInterface({
     }
   };
 
-  const handleCopyToClipboard = () => {
-    const text = allQuestions.map(q => {
-      const response = q.responses[0]; // Get the most recent response
-      return `Q: ${q.text}\nA: ${response?.transcription || 'No response'}\n`;
-    }).join('\n');
-
-    navigator.clipboard.writeText(text)
-      .then(() => {
-        toast({
-          title: "Success",
-          description: "All responses copied to clipboard",
-          duration: 2000,
-        });
-      })
-      .catch(() => {
-        toast({
-          title: "Error",
-          description: "Failed to copy to clipboard",
-          variant: "destructive",
-          duration: 2000,
-        });
-      });
-  };
-
   const handleDownload = () => {
     const text = allQuestions.map(q => {
       const response = q.responses[0]; // Get the most recent response
@@ -422,6 +404,37 @@ export function RecordingInterface({
     URL.revokeObjectURL(url);
   };
 
+  const handleGenerateDraft = async (params: GenerationParams) => {
+    try {
+      setIsGeneratingDraft(true);
+      
+      // Prepare responses for generation
+      const responses = allQuestions.map(q => ({
+        questionText: q.text,
+        transcription: q.responses[0]?.transcription || 'No response',
+      }));
+
+      const { content } = await generateDraft({
+        ...params,
+        responses,
+      });
+
+      setGeneratedContent(content);
+      toast({
+        description: "Draft generated successfully!",
+      });
+    } catch (error) {
+      console.error('Error generating draft:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to generate draft",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingDraft(false);
+    }
+  };
+
   // Show export view if we're on the last question and have at least one response
   const shouldShowExport = isSessionComplete && allQuestions.some(q => q.responses.length > 0);
 
@@ -431,49 +444,43 @@ export function RecordingInterface({
         <div className="space-y-4">
           <h3 className="text-xl font-medium">Session Complete!</h3>
           <p className="text-sm text-muted-foreground">
-            Here are all your responses. You can copy them to your clipboard, download them as a text file, or return to any question to make changes.
+            Here are all your responses. You can copy them to your clipboard, download them as a text file, generate an AI-written draft, or return to any question to make changes.
           </p>
         </div>
 
-        <div className="relative space-y-6 bg-muted/50 rounded-lg p-6">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleCopyToClipboard}
-            className="absolute top-4 right-4 gap-2"
-          >
-            <Copy className="w-4 h-4" />
-            Copy All
-          </Button>
+        <ExportView
+          responses={allQuestions.map(q => ({
+            questionText: q.text,
+            transcription: q.responses[0]?.transcription || 'No response',
+          }))}
+          onGenerateDraft={handleGenerateDraft}
+          isGenerating={isGeneratingDraft}
+        />
 
-          {allQuestions.map((q, index) => {
-            const response = q.responses[0]; // Get the most recent response
-            return (
-              <div
-                key={q.id}
-                className="space-y-2 p-4 rounded-lg hover:bg-accent/50 transition-colors cursor-pointer group"
+        {generatedContent && (
+          <div className="space-y-4 bg-muted/50 rounded-lg p-6">
+            <div className="flex justify-between items-center">
+              <h4 className="text-lg font-medium">Generated Draft</h4>
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() => {
-                  if (onPrevious && currentQuestionIndex > index) {
-                    // Navigate backwards multiple times if needed
-                    for (let i = 0; i < currentQuestionIndex - index; i++) {
-                      onPrevious();
-                    }
-                  } else if (onNext && currentQuestionIndex < index) {
-                    // Navigate forwards multiple times if needed
-                    for (let i = 0; i < index - currentQuestionIndex; i++) {
-                      onNext();
-                    }
-                  }
+                  navigator.clipboard.writeText(generatedContent);
+                  toast({
+                    description: "Draft copied to clipboard",
+                  });
                 }}
+                className="gap-2"
               >
-                <p className="font-medium">Q{index + 1}: {q.text}</p>
-                <p className="text-sm text-muted-foreground pl-6">
-                  {response?.transcription || 'No response'}
-                </p>
-              </div>
-            );
-          })}
-        </div>
+                <Copy className="w-4 h-4" />
+                Copy Draft
+              </Button>
+            </div>
+            <div className="prose prose-invert max-w-none">
+              <div className="whitespace-pre-wrap">{generatedContent}</div>
+            </div>
+          </div>
+        )}
 
         {/* Fixed Bottom Navigation Bar */}
         <div className="fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-sm border-t">
@@ -501,18 +508,24 @@ export function RecordingInterface({
             <Button
               variant="outline"
               onClick={() => setIsSessionComplete(false)}
-              className="w-[180px] h-12 text-base gap-2"
+              className={cn(
+                "w-[240px] h-12 text-base gap-3",
+                "border-2"
+              )}
             >
               <ChevronLeft className="w-5 h-5" />
-              Return to Questions
+              <span>Return to Questions</span>
             </Button>
             <Button
               variant="outline"
               onClick={handleDownload}
-              className="w-[180px] h-12 text-base gap-2"
+              className={cn(
+                "w-[180px] h-12 text-base gap-2",
+                "border-2"
+              )}
             >
               <Download className="w-5 h-5" />
-              Download as Text
+              Download as TXT
             </Button>
           </div>
         </div>
@@ -521,7 +534,7 @@ export function RecordingInterface({
   }
 
   return (
-    <div className="flex flex-col items-center space-y-6 p-8 rounded-lg relative bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 border-2 border-transparent [background-clip:padding-box] before:absolute before:inset-0 before:-z-10 before:m-[-2px] before:rounded-lg before:bg-gradient-to-r before:from-indigo-500 before:via-purple-500 before:to-pink-500 transition-opacity duration-300">
+    <div className="flex flex-col items-center space-y-6 p-8 mb-32 rounded-lg relative bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 border-2 border-transparent [background-clip:padding-box] before:absolute before:inset-0 before:-z-10 before:m-[-2px] before:rounded-lg before:bg-gradient-to-r before:from-indigo-500 before:via-purple-500 before:to-pink-500 transition-opacity duration-300">
 
       {/* Auto Advance Toggle */}
       <div className="w-full flex items-center justify-end space-x-2">
@@ -538,47 +551,10 @@ export function RecordingInterface({
       {/* Question Display */}
       <div className="w-full text-center space-y-2 transition-all duration-300 transform">
         <h3 className="text-xl font-medium">{currentQuestion.text}</h3>
-        {currentQuestion.responses.length > 0 && (
-          <div className="space-y-4 mt-4">
-            <p className="text-sm text-muted-foreground">
-              {currentQuestion.responses.length} response{currentQuestion.responses.length !== 1 ? 's' : ''} recorded
-            </p>
-            <div className="space-y-2">
-              {currentQuestion.responses.map((response) => (
-                <div
-                  key={response.id}
-                  className="p-4 rounded-lg bg-muted/50 text-left relative group"
-                >
-                  <div className="flex justify-between items-start gap-4">
-                    <div className="flex-1">
-                      <p className="text-sm text-muted-foreground mb-1">
-                        {new Date(response.createdAt).toLocaleString()}
-                      </p>
-                      <p className="text-sm">{response.transcription}</p>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="opacity-0 group-hover:opacity-100 transition-opacity -mt-1 -mr-2 h-8 w-8"
-                      onClick={() => handleDeleteResponse(response.id)}
-                      disabled={isDeletingResponse === response.id}
-                    >
-                      {isDeletingResponse === response.id ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Trash2 className="h-4 w-4 text-muted-foreground hover:text-red-400" />
-                      )}
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Recording Controls */}
-      <div className="flex flex-col items-center space-y-4 mb-24">
+      <div className="flex flex-col items-center space-y-4">
         {recordingState === RecordingState.RECORDING && (
           <div className="flex flex-col items-center gap-2">
             <div className="relative">
@@ -645,6 +621,45 @@ export function RecordingInterface({
         )}
       </div>
 
+      {/* Past Responses */}
+      {currentQuestion.responses.length > 0 && (
+        <div className="w-full space-y-4">
+          <p className="text-sm text-muted-foreground text-center">
+            {currentQuestion.responses.length} response{currentQuestion.responses.length !== 1 ? 's' : ''} recorded
+          </p>
+          <div className="space-y-2">
+            {currentQuestion.responses.map((response) => (
+              <div
+                key={response.id}
+                className="p-4 rounded-lg bg-muted/50 text-left relative group"
+              >
+                <div className="flex justify-between items-start gap-4">
+                  <div className="flex-1">
+                    <p className="text-sm text-muted-foreground mb-1">
+                      {new Date(response.createdAt).toLocaleString()}
+                    </p>
+                    <p className="text-sm">{response.transcription}</p>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="opacity-0 group-hover:opacity-100 transition-opacity -mt-1 -mr-2 h-8 w-8"
+                    onClick={() => handleDeleteResponse(response.id)}
+                    disabled={isDeletingResponse === response.id}
+                  >
+                    {isDeletingResponse === response.id ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-4 w-4 text-muted-foreground hover:text-red-400" />
+                    )}
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Fixed Bottom Navigation Bar */}
       <div className="fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-sm border-t">
         {/* Progress Bar */}
@@ -675,10 +690,14 @@ export function RecordingInterface({
                   variant="outline"
                   onClick={onPrevious}
                   disabled={isFirstQuestion || recordingState !== RecordingState.IDLE}
-                  className="w-[180px] h-12 text-base gap-2 select-none"
+                  className={cn(
+                    "w-[180px] h-12 text-base gap-2 select-none",
+                    "border-2",
+                    "disabled:border-[1px]"
+                  )}
                 >
                   <ChevronLeft className="w-5 h-5" />
-                  Previous
+                  <span className="hidden sm:inline">Previous</span>
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
@@ -693,30 +712,38 @@ export function RecordingInterface({
           </TooltipProvider>
           <div className="flex flex-col items-center gap-2">
             <span className="text-base text-muted-foreground select-none">
-              Question {currentQuestionIndex + 1} of {allQuestions.length}
+              <span className="sm:hidden">{currentQuestionIndex + 1}/{allQuestions.length}</span>
+              <span className="hidden sm:inline">Question {currentQuestionIndex + 1} of {allQuestions.length}</span>
             </span>
-            {isLastQuestion && (
-              <Button
-                variant="link"
-                size="sm"
-                onClick={() => setIsSessionComplete(true)}
-                className="text-muted-foreground hover:text-primary"
-              >
-                Complete Session
-              </Button>
-            )}
           </div>
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
-                  variant="outline"
-                  onClick={onNext}
-                  disabled={isLastQuestion || recordingState !== RecordingState.IDLE}
-                  className="w-[180px] h-12 text-base gap-2 select-none"
+                  variant={isLastQuestion ? "default" : "outline"}
+                  onClick={isLastQuestion ? () => setIsSessionComplete(true) : onNext}
+                  disabled={recordingState !== RecordingState.IDLE}
+                  className={cn(
+                    "w-[180px] h-12 text-base gap-2 select-none",
+                    isLastQuestion ? (
+                      "bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white shadow-lg hover:shadow-xl transition-shadow"
+                    ) : (
+                      "border-2 disabled:border-[1px]"
+                    )
+                  )}
                 >
-                  Next
-                  <ChevronRight className="w-5 h-5" />
+                  {isLastQuestion ? (
+                    <>
+                      <span className="hidden sm:inline font-medium">Complete Session</span>
+                      <span className="sm:hidden font-medium">Complete</span>
+                      <ChevronRight className="w-5 h-5" />
+                    </>
+                  ) : (
+                    <>
+                      <span className="hidden sm:inline">Next</span>
+                      <ChevronRight className="w-5 h-5" />
+                    </>
+                  )}
                 </Button>
               </TooltipTrigger>
               <TooltipContent>

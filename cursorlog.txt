@@ -1,0 +1,20 @@
+[Draft Generator Implementation]
+- Created DraftGenerator component with model selection, format options, and advanced settings
+- Added types for LLM providers, content formats, and generation parameters
+- Installed shadcn/ui select and accordion components
+- Implemented API key validation and error handling
+- Added preview of responses that will be used in generation
+
+[Draft Generation Integration]
+- Created unified API endpoint for both Claude and Gemini
+- Implemented shared prompt generation logic
+- Added draft-service for client-side API integration
+- Updated recording interface to handle draft generation
+- Added generated content display with copy functionality
+
+[API Key Management Enhancement]
+- Created LLMKeyDialog component for managing Claude and Gemini API keys
+- Added step-by-step instructions for obtaining API keys
+- Implemented direct links to provider dashboards
+- Added inline "Add API Key" buttons for better UX
+- Automated draft generation after key submission 

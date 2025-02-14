@@ -5,12 +5,14 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogOverlay,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ExternalLink, Key, AlertCircle } from "lucide-react";
+import { ExternalLink, Key, AlertCircle, Mic, Sparkles } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { cn } from "@/lib/utils";
 
 interface OpenAIKeyDialogProps {
   open: boolean;
@@ -49,20 +51,30 @@ export function OpenAIKeyDialog({ open, onOpenAIKeySubmit }: OpenAIKeyDialogProp
   };
 
   return (
-    <Dialog 
-      open={open} 
-      onOpenChange={() => {}}
-    >
+    <Dialog open={open}>
+      <DialogOverlay className="bg-black/60" />
       <DialogContent 
-        className="sm:max-w-md"
-        hideCloseButton
+        className={cn(
+          "sm:max-w-md",
+        )}
         onPointerDownOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
+        hideCloseButton
       >
         <DialogHeader>
           <DialogTitle>Enter OpenAI API Key</DialogTitle>
-          <DialogDescription>
-            You&apos;ll need to provide your own OpenAI API key to use BrainDump&apos;s AI features.
+          <DialogDescription className="space-y-3">
+            <p>
+              BrainDump uses OpenAI&apos;s APIs for two core features:
+            </p>
+            <div className="flex items-start gap-2 text-sm">
+              <Mic className="w-4 h-4 mt-1 shrink-0" />
+              <span><strong>Voice Transcription:</strong> Convert your voice recordings to text using Whisper, OpenAI&apos;s state-of-the-art speech recognition model</span>
+            </div>
+            <div className="flex items-start gap-2 text-sm">
+              <Sparkles className="w-4 h-4 mt-1 shrink-0" />
+              <span><strong>Question Generation:</strong> Create personalized questions using GPT-4o when you want AI assistance in crafting your session</span>
+            </div>
           </DialogDescription>
         </DialogHeader>
 
@@ -70,6 +82,7 @@ export function OpenAIKeyDialog({ open, onOpenAIKeySubmit }: OpenAIKeyDialogProp
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
             We recommend creating a <strong>new API key</strong> with a hard spending limit (e.g., $3) for safety.
+            Transcription costs ~$0.006/minute.
           </AlertDescription>
         </Alert>
 

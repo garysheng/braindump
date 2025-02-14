@@ -9,12 +9,25 @@ import { useAuth } from "@/lib/firebase/auth-context";
 import { signOut } from "@/lib/firebase/auth-service";
 import { toast } from "@/hooks/use-toast";
 import { ArrowLeft, Key, Loader2 } from "lucide-react";
+import { useLLMKeys } from '@/hooks/use-llm-keys';
 
 export default function ProfilePage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const [apiKey, setApiKey] = useState("");
   const [isTestingKey, setIsTestingKey] = useState(false);
+  const {
+    anthropicKey,
+    geminiKey,
+    setAnthropicKey,
+    setGeminiKey,
+    removeAnthropicKey,
+    removeGeminiKey,
+  } = useLLMKeys();
+  const [isTestingAnthropicKey, setIsTestingAnthropicKey] = useState(false);
+  const [isTestingGeminiKey, setIsTestingGeminiKey] = useState(false);
+  const [newAnthropicKey, setNewAnthropicKey] = useState("");
+  const [newGeminiKey, setNewGeminiKey] = useState("");
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -92,6 +105,26 @@ export default function ProfilePage() {
     });
   };
 
+  const handleUpdateAnthropicKey = async () => {
+    setIsTestingAnthropicKey(true);
+    try {
+      await setAnthropicKey(newAnthropicKey);
+      setNewAnthropicKey("");
+    } finally {
+      setIsTestingAnthropicKey(false);
+    }
+  };
+
+  const handleUpdateGeminiKey = async () => {
+    setIsTestingGeminiKey(true);
+    try {
+      await setGeminiKey(newGeminiKey);
+      setNewGeminiKey("");
+    } finally {
+      setIsTestingGeminiKey(false);
+    }
+  };
+
   if (authLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -135,7 +168,7 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          {/* API Key Management */}
+          {/* OpenAI API Key Management */}
           <div className="space-y-4">
             <h2 className="text-xl font-semibold">OpenAI API Key</h2>
             <div className="p-4 rounded-lg border bg-card space-y-4">
@@ -185,6 +218,120 @@ export default function ProfilePage() {
                     className="text-primary hover:underline"
                   >
                     OpenAI dashboard
+                  </a>
+                  .
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Anthropic API Key Management */}
+          <div className="space-y-4">
+            <h2 className="text-xl font-semibold">Anthropic API Key</h2>
+            <div className="p-4 rounded-lg border bg-card space-y-4">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="anthropicKey">API Key</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="anthropicKey"
+                      type="password"
+                      placeholder="sk-..."
+                      value={newAnthropicKey}
+                      onChange={(e) => setNewAnthropicKey(e.target.value)}
+                      className="font-mono"
+                    />
+                    <Button 
+                      onClick={handleUpdateAnthropicKey}
+                      disabled={!newAnthropicKey.trim().startsWith('sk-') || isTestingAnthropicKey}
+                    >
+                      {isTestingAnthropicKey ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Key className="w-4 h-4" />
+                      )}
+                      <span className="ml-2">Update Key</span>
+                    </Button>
+                  </div>
+                </div>
+
+                {anthropicKey && (
+                  <Button
+                    variant="outline"
+                    onClick={removeAnthropicKey}
+                    className="w-full"
+                  >
+                    Remove API Key
+                  </Button>
+                )}
+
+                <p className="text-sm text-muted-foreground">
+                  Your API key is stored locally and never sent to our servers.
+                  You can get an API key from the{" "}
+                  <a
+                    href="https://console.anthropic.com/account/keys"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline"
+                  >
+                    Anthropic dashboard
+                  </a>
+                  .
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Gemini API Key Management */}
+          <div className="space-y-4">
+            <h2 className="text-xl font-semibold">Gemini API Key</h2>
+            <div className="p-4 rounded-lg border bg-card space-y-4">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="geminiKey">API Key</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="geminiKey"
+                      type="password"
+                      placeholder="Enter your Gemini API key"
+                      value={newGeminiKey}
+                      onChange={(e) => setNewGeminiKey(e.target.value)}
+                      className="font-mono"
+                    />
+                    <Button 
+                      onClick={handleUpdateGeminiKey}
+                      disabled={!newGeminiKey.trim() || isTestingGeminiKey}
+                    >
+                      {isTestingGeminiKey ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Key className="w-4 h-4" />
+                      )}
+                      <span className="ml-2">Update Key</span>
+                    </Button>
+                  </div>
+                </div>
+
+                {geminiKey && (
+                  <Button
+                    variant="outline"
+                    onClick={removeGeminiKey}
+                    className="w-full"
+                  >
+                    Remove API Key
+                  </Button>
+                )}
+
+                <p className="text-sm text-muted-foreground">
+                  Your API key is stored locally and never sent to our servers.
+                  You can get an API key from the{" "}
+                  <a
+                    href="https://makersuite.google.com/app/apikey"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline"
+                  >
+                    Google AI Studio
                   </a>
                   .
                 </p>

@@ -9,7 +9,7 @@ import { QuestionSelector } from "@/components/question-selector";
 import { createNewSession, getUserSessions, deleteSession } from "@/lib/data-service-client";
 import { useSession } from "@/hooks/use-session";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Loader2, ArrowLeft, User, Trash2 } from "lucide-react";
+import { Plus, Loader2, ArrowLeft, Trash2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -27,6 +27,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { AppHeader } from "@/components/app-header";
 
 interface Question {
   id: string;
@@ -39,6 +40,35 @@ interface Session {
   title: string;
   createdAt: Date;
   updatedAt: Date;
+}
+
+interface HeaderContentProps {
+  session: any | null;
+  activeSessionId: string | null;
+  onReturnToSessions: () => void;
+}
+
+function HeaderContent({ session, activeSessionId, onReturnToSessions }: HeaderContentProps) {
+  if (activeSessionId) {
+    return (
+      <div className="flex items-center gap-4">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onReturnToSessions}
+          className="gap-2"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Return to Sessions
+        </Button>
+        <h1 className="text-lg font-semibold truncate">
+          {session?.title}
+        </h1>
+      </div>
+    );
+  }
+
+  return <h1 className="text-lg font-semibold">Dashboard</h1>;
 }
 
 export default function DashboardPage() {
@@ -87,11 +117,13 @@ export default function DashboardPage() {
 
     if (user) {
       loadSessions();
+      // Check if we have an OpenAI key in localStorage
+      const key = localStorage.getItem('openai-api-key');
+      setHasOpenAIKey(!!key);
+      if (!key) {
+        setShowOpenAIKeyDialog(true);
+      }
     }
-
-    // Check if we have an OpenAI key in localStorage
-    const key = localStorage.getItem('openai-api-key');
-    setHasOpenAIKey(!!key);
   }, [user, authLoading, router, loadSessions]);
 
   const handleOpenAIKeySubmit = (apiKey: string) => {
@@ -188,56 +220,18 @@ export default function DashboardPage() {
   }
 
   return (
-    <main className="min-h-screen p-4 sm:p-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          {activeSessionId ? (
-            <div className="w-full flex items-center">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setActiveSessionId(null)}
-                className="gap-2"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                Return to Sessions
-              </Button>
-              <h1 className="text-2xl font-semibold flex-1 text-center">
-                {session?.title}
-              </h1>
-              <Button 
-                variant="ghost" 
-                onClick={() => router.push('/profile')}
-                className="gap-2"
-              >
-                <User className="w-4 h-4" />
-                Profile
-              </Button>
-            </div>
-          ) : (
-            <>
-              <h1 className="text-3xl font-bold">Dashboard</h1>
-              <div className="flex items-center gap-4">
-                <Button
-                  variant="outline"
-                  onClick={() => setShowQuestionSelector(true)}
-                  className="gap-2"
-                >
-                  <Plus className="w-4 h-4" />
-                  New Session
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  onClick={() => router.push('/profile')}
-                  className="gap-2"
-                >
-                  <User className="w-4 h-4" />
-                  Profile
-                </Button>
-              </div>
-            </>
-          )}
-        </div>
+    <>
+      <main className="container max-w-7xl p-6">
+        {!activeSessionId && (
+          <Button
+            variant="outline"
+            onClick={() => setShowQuestionSelector(true)}
+            className="w-full gap-2 mb-6"
+          >
+            <Plus className="w-4 h-4" />
+            New Session
+          </Button>
+        )}
 
         <div className="grid gap-6">
           {activeSessionId && session ? (
@@ -321,7 +315,7 @@ export default function DashboardPage() {
             </div>
           )}
         </div>
-      </div>
+      </main>
 
       <Dialog open={showQuestionSelector} onOpenChange={setShowQuestionSelector}>
         <DialogContent className="max-w-4xl">
@@ -343,7 +337,7 @@ export default function DashboardPage() {
 
       <OpenAIKeyDialog 
         open={showOpenAIKeyDialog} 
-        onOpenAIKeySubmit={handleOpenAIKeySubmit} 
+        onOpenAIKeySubmit={handleOpenAIKeySubmit}
       />
 
       <AlertDialog open={!!sessionToDelete} onOpenChange={() => setSessionToDelete(null)}>
@@ -373,6 +367,6 @@ export default function DashboardPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </main>
+    </>
   );
 } 
